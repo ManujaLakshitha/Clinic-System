@@ -1,4 +1,5 @@
-package main
+// backend/config/db.go
+package config
 
 import (
 	"database/sql"
