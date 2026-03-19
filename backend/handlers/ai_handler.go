@@ -1,3 +1,4 @@
+// backend/handlers/ai_handler.go
 package handlers
 
 import (
@@ -10,13 +11,19 @@ import (
 func ProcessHandler(w http.ResponseWriter, r *http.Request) {
 	input := r.URL.Query().Get("text")
 
-	err := services.ProcessAndSave(input)
+	result, visitID, err := services.ProcessAndSave(input)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "processed successfully",
-	})
+	response := map[string]interface{}{
+		"visit_id":  visitID,
+		"drugs":     result.Drugs,
+		"lab_tests": result.LabTests,
+		"notes":     result.Notes,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }

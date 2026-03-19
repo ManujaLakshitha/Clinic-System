@@ -1,3 +1,4 @@
+// backend/models/bill.go
 package models
 
 type Bill struct {

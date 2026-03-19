@@ -1,3 +1,4 @@
+// backend/services/parser_service.go
 package services
 
 import (
@@ -12,7 +13,7 @@ type ParseResponse struct {
 	Notes    []string
 }
 
-func ProcessAndSave(input string) error {
+func ProcessAndSave(input string) (ParseResponse, int, error) {
 	result := ParseResponse{}
 
 	words := strings.Split(input, ",")
@@ -29,23 +30,20 @@ func ProcessAndSave(input string) error {
 		}
 	}
 
-	// save to DB
 	visitID, err := repository.CreateVisit()
 	if err != nil {
-		return err
+		return result, 0, err
 	}
 
 	for _, d := range result.Drugs {
 		repository.SaveDrug(visitID, d)
 	}
-
 	for _, t := range result.LabTests {
 		repository.SaveLabTest(visitID, t)
 	}
-
 	for _, n := range result.Notes {
 		repository.SaveNote(visitID, n)
 	}
 
-	return nil
+	return result, visitID, nil
 }
