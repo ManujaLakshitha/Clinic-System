@@ -1,14 +1,14 @@
 //frontend/src/components/VisitList.tsx
 import { useEffect, useState } from "react";
-import { deleteVisit, getVisitDetails, getVisits } from "../services/api";
+import { deleteVisit, getVisitDetails, getVisits, updateVisit } from "../services/api";
 import type { VisitSummary, VisitDetails } from "../types";
 
 export default function VisitList() {
-  const [visits,   setVisits]   = useState<VisitSummary[]>([]);
+  const [visits, setVisits] = useState<VisitSummary[]>([]);
   const [selected, setSelected] = useState<VisitDetails | null>(null);
   const [activeId, setActiveId] = useState<number | null>(null);
-  const [error,    setError]    = useState<string | null>(null);
-  const [loading,  setLoading]  = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => { load(); }, []);
 
@@ -44,6 +44,18 @@ export default function VisitList() {
       await load();
     } catch {
       setError("Failed to delete visit.");
+    }
+  }
+
+  async function handleEdit(id: number) {
+    const newNote = prompt("Enter new note:");
+    if (!newNote) return;
+
+    try {
+      await updateVisit(id, [newNote]);
+      await load();
+    } catch (err: any) {
+      setError(err.message);
     }
   }
 
@@ -203,6 +215,15 @@ export default function VisitList() {
                   >
                     Delete
                   </button>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEdit(v.id);
+                    }}
+                  >
+                    Edit
+                  </button>
                 </div>
               </div>
 
@@ -219,9 +240,9 @@ export default function VisitList() {
                     gap: 12,
                   }}>
                     {([
-                      { label: "💊 Drugs",      items: selected.drugs     },
-                      { label: "🔬 Lab Tests",  items: selected.lab_tests },
-                      { label: "📋 Notes",      items: selected.notes     },
+                      { label: "💊 Drugs", items: selected.drugs },
+                      { label: "🔬 Lab Tests", items: selected.lab_tests },
+                      { label: "📋 Notes", items: selected.notes },
                     ] as { label: string; items: string[] }[]).map(col => (
                       <div key={col.label}>
                         <p style={{
