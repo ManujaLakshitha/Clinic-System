@@ -17,8 +17,8 @@ export default function VisitList() {
     try {
       const data = await getVisits();
       setVisits(data);
-    } catch {
-      setError("Could not connect to backend.");
+    } catch (err: any) {
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -30,8 +30,8 @@ export default function VisitList() {
       const data = await getVisitDetails(id);
       setSelected(data);
       setActiveId(id);
-    } catch {
-      setError("Failed to load visit details.");
+    } catch (err: any) {
+      setError(err.message);
     }
   }
 
@@ -41,9 +41,9 @@ export default function VisitList() {
     try {
       await deleteVisit(id);
       if (activeId === id) { setSelected(null); setActiveId(null); }
-      await load();
-    } catch {
-      setError("Failed to delete visit.");
+      setVisits(prev => prev.filter(v => v.id !== id));
+    } catch (err: any) {
+      setError(err.message);
     }
   }
 
@@ -53,7 +53,7 @@ export default function VisitList() {
 
     try {
       await updateVisit(id, [newNote]);
-      await load();
+      setVisits(prev => prev.filter(v => v.id !== id));
     } catch (err: any) {
       setError(err.message);
     }
