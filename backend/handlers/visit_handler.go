@@ -122,10 +122,12 @@ func DeleteVisitHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateVisitHandler(w http.ResponseWriter, r *http.Request) {
+
 	if r.Method != http.MethodPut {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
 	visitID := r.URL.Query().Get("id")
 
 	var data struct {
@@ -137,13 +139,31 @@ func UpdateVisitHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	tx, err := config.DB.Begin()
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
 	// delete old notes
-	config.DB.Exec("DELETE FROM notes WHERE visit_id=$1", visitID)
+	_, err = tx.Exec("DELETE FROM notes WHERE visit_id=$1", visitID)
+	if err != nil {
+		tx.Rollback()
+		http.Error(w, err.Error(), 500)
+		return
+	}
 
 	// insert new notes
 	for _, n := range data.Notes {
-		config.DB.Exec("INSERT INTO notes (visit_id, content) VALUES ($1, $2)", visitID, n)
+		_, err := tx.Exec("INSERT INTO notes (visit_id, content) VALUES ($1, $2)", visitID, n)
+		if err != nil {
+			tx.Rollback()
+			http.Error(w, err.Error(), 500)
+			return
+		}
 	}
+
+	tx.Commit()
 
 	json.NewEncoder(w).Encode(map[string]string{
 		"message": "updated successfully",
