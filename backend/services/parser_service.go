@@ -38,9 +38,11 @@ func ProcessAndSave(input string) (ParseResponse, int, error) {
 	for _, d := range result.Drugs {
 		repository.SaveDrug(visitID, d)
 	}
+
 	for _, t := range result.LabTests {
 		repository.SaveLabTest(visitID, t)
 	}
+
 	for _, n := range result.Notes {
 		repository.SaveNote(visitID, n)
 	}

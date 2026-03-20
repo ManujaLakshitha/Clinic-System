@@ -17,13 +17,10 @@ func ProcessHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := map[string]interface{}{
-		"visit_id":  visitID,
+	json.NewEncoder(w).Encode(map[string]interface{}{
 		"drugs":     result.Drugs,
 		"lab_tests": result.LabTests,
 		"notes":     result.Notes,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+		"visit_id":  visitID,
+	})
 }

@@ -15,8 +15,15 @@ func CalculateBill(visitID int) (float64, error) {
 	var drugCount int
 	var testCount int
 
-	config.DB.QueryRow("SELECT COUNT(*) FROM drugs WHERE visit_id=$1", visitID).Scan(&drugCount)
-	config.DB.QueryRow("SELECT COUNT(*) FROM lab_tests WHERE visit_id=$1", visitID).Scan(&testCount)
+	err := config.DB.QueryRow("SELECT COUNT(*) FROM drugs WHERE visit_id=$1", visitID).Scan(&drugCount)
+	if err != nil {
+		return 0, err
+	}
+
+	err2 := config.DB.QueryRow("SELECT COUNT(*) FROM lab_tests WHERE visit_id=$1", visitID).Scan(&testCount)
+	if err2 != nil {
+		return 0, err2
+	}
 
 	total = float64(drugCount*drugPrice + testCount*testPrice)
 

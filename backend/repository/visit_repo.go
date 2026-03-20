@@ -8,6 +8,9 @@ import (
 func CreateVisit() (int, error) {
 	var id int
 	err := config.DB.QueryRow("INSERT INTO visits DEFAULT VALUES RETURNING id").Scan(&id)
+	if err != nil {
+		return 0, err
+	}
 	return id, err
 }
 
