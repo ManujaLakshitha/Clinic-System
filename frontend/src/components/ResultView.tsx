@@ -1,5 +1,7 @@
 //frontend/src/components/ResultView.tsx
+import { useState } from "react";
 import type { ParseResponse } from "../types";
+import BillView from "./BillView";
 
 type ResultViewProps = {
   result: ParseResponse | null;
@@ -7,12 +9,14 @@ type ResultViewProps = {
 }
 
 export default function ResultView({ result, visitId }: ResultViewProps) {
+  const [total, setTotal] = useState<number | null>(null);
+
   const generateBill = async () => {
     const res = await fetch(
       `http://localhost:8080/bill?visit_id=${visitId}`
     );
     const data = await res.json();
-    alert("Total Bill: " + data.total);
+    setTotal(data.total);
   };
 
   return (
@@ -26,6 +30,8 @@ export default function ResultView({ result, visitId }: ResultViewProps) {
       {visitId && (
         <button onClick={generateBill}>Generate Bill</button>
       )}
+
+      <BillView total={total} />
     </div>
   );
 }
