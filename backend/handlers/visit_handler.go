@@ -101,3 +101,25 @@ func DeleteVisitHandler(w http.ResponseWriter, r *http.Request) {
 		"message": "deleted successfully",
 	})
 }
+
+func UpdateVisitHandler(w http.ResponseWriter, r *http.Request) {
+	visitID := r.URL.Query().Get("id")
+
+	var data struct {
+		Notes []string `json:"notes"`
+	}
+
+	json.NewDecoder(r.Body).Decode(&data)
+
+	// delete old notes
+	config.DB.Exec("DELETE FROM notes WHERE visit_id=$1", visitID)
+
+	// insert new notes
+	for _, n := range data.Notes {
+		config.DB.Exec("INSERT INTO notes (visit_id, content) VALUES ($1, $2)", visitID, n)
+	}
+
+	json.NewEncoder(w).Encode(map[string]string{
+		"message": "updated successfully",
+	})
+}

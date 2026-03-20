@@ -1,6 +1,6 @@
 //frontend/src/components/VisitList.tsx
 import { useEffect, useState } from "react";
-import { deleteVisit, getVisitDetails, getVisits } from "../services/api";
+import { deleteVisit, getVisitDetails, getVisits, updateVisit } from "../services/api";
 
 export default function VisitList() {
     const [visits, setVisits] = useState([]);
@@ -17,6 +17,17 @@ export default function VisitList() {
 
     const handleDelete = async (id: number) => {
         await deleteVisit(id);
+
+        const updated = await getVisits();
+        setVisits(updated);
+    };
+
+    const handleEdit = async (id: number) => {
+        const newNote = prompt("Enter new note:");
+
+        if (!newNote) return;
+
+        await updateVisit(id, [newNote]);
 
         const updated = await getVisits();
         setVisits(updated);
@@ -68,6 +79,8 @@ export default function VisitList() {
                     >
                         Visit ID: {v.id}
                     </span>
+                    <button onClick={() => handleEdit(v.id)}>Edit</button>
+                    
                     <button onClick={() => handleDelete(v.id)}>Delete</button>
                 </div>
             ))}
