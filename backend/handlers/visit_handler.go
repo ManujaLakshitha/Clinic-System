@@ -9,11 +9,12 @@ import (
 )
 
 type Visit struct {
-	ID int `json:"id"`
+	ID        int    `json:"id"`
+	CreatedAt string `json:"created_at"`
 }
 
 func GetVisitsHandler(w http.ResponseWriter, r *http.Request) {
-	rows, err := config.DB.Query("SELECT id FROM visits ORDER BY id DESC")
+	rows, err := config.DB.Query("SELECT id, created_at FROM visits ORDER BY id DESC")
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
@@ -24,7 +25,7 @@ func GetVisitsHandler(w http.ResponseWriter, r *http.Request) {
 
 	for rows.Next() {
 		var v Visit
-		rows.Scan(&v.ID)
+		rows.Scan(&v.ID, &v.CreatedAt)
 		visits = append(visits, v)
 	}
 
@@ -39,7 +40,13 @@ func GetVisitDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	var notes []string
 
 	// Drugs
-	rows1, _ := config.DB.Query("SELECT name FROM drugs WHERE visit_id=$1", visitID)
+	rows1, err := config.DB.Query("SELECT name FROM drugs WHERE visit_id=$1", visitID)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	defer rows1.Close()
+
 	for rows1.Next() {
 		var d string
 		rows1.Scan(&d)
@@ -47,7 +54,13 @@ func GetVisitDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Tests
-	rows2, _ := config.DB.Query("SELECT test_name FROM lab_tests WHERE visit_id=$1", visitID)
+	rows2, err := config.DB.Query("SELECT test_name FROM lab_tests WHERE visit_id=$1", visitID)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	defer rows2.Close()
+
 	for rows2.Next() {
 		var t string
 		rows2.Scan(&t)
@@ -55,7 +68,13 @@ func GetVisitDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Notes
-	rows3, _ := config.DB.Query("SELECT content FROM notes WHERE visit_id=$1", visitID)
+	rows3, err := config.DB.Query("SELECT content FROM notes WHERE visit_id=$1", visitID)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	defer rows3.Close()
+
 	for rows3.Next() {
 		var n string
 		rows3.Scan(&n)
@@ -103,13 +122,20 @@ func DeleteVisitHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateVisitHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPut {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 	visitID := r.URL.Query().Get("id")
 
 	var data struct {
 		Notes []string `json:"notes"`
 	}
 
-	json.NewDecoder(r.Body).Decode(&data)
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
 
 	// delete old notes
 	config.DB.Exec("DELETE FROM notes WHERE visit_id=$1", visitID)

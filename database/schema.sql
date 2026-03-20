@@ -1,3 +1,4 @@
+--database/shema.sql
 -- Visits table
 CREATE TABLE IF NOT EXISTS visits (
     id SERIAL PRIMARY KEY,

@@ -1,3 +1,4 @@
+//frontend/src/components/InputBox.tsx
 import { useState, useRef } from "react";
 import { processText } from "../services/api";
 import type { ParseResponse } from "../types";

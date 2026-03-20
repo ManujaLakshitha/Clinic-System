@@ -1,3 +1,4 @@
+//frontend/src/pages/Home.tsx
 import { useState } from "react";
 import InputBox from "../components/InputBox";
 import ResultView from "../components/ResultView";

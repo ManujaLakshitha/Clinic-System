@@ -1,3 +1,4 @@
+//frontend/src/components/VisitList.tsx
 import { useEffect, useState } from "react";
 import { deleteVisit, getVisitDetails, getVisits } from "../services/api";
 import type { VisitSummary, VisitDetails } from "../types";

@@ -1,3 +1,4 @@
+//frontend/src/components/ResultView.tsx
 import { useState } from "react";
 import type { ParseResponse } from "../types";
 import BillView from "./BillView";

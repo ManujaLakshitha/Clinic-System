@@ -1,3 +1,4 @@
+//frontend/src/components/BillView.tsx
 const DRUG_PRICE = 50;
 const TEST_PRICE = 200;
 const CONSULT    = 500;
