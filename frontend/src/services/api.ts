@@ -31,3 +31,15 @@ export const deleteVisit = async (id: number): Promise<void> => {
   const res = await fetch(`${BASE_URL}/delete-visit?id=${id}`);
   if (!res.ok) throw new Error(await res.text());
 };
+
+export const updateVisit = async (id: number, notes: string[]) => {
+  const res = await fetch(`${BASE_URL}/update-visit?id=${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ notes }),
+  });
+
+  if (!res.ok) throw new Error(await res.text());
+};
