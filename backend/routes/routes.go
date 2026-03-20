@@ -10,4 +10,5 @@ import (
 func SetupRoutes() {
 	http.HandleFunc("/process", handlers.ProcessHandler)
 	http.HandleFunc("/bill", handlers.BillHandler)
+	http.HandleFunc("/visits", handlers.GetVisitsHandler)
 }
