@@ -47,15 +47,17 @@ export default function VisitList() {
     }
   }
 
-  async function handleEdit(id: number) {
+  async function handleEdit(e: React.MouseEvent, id: number) {
+    e.stopPropagation();
+
     const newNote = prompt("Enter new note:");
     if (!newNote) return;
 
     try {
       await updateVisit(id, [newNote]);
-      setVisits(prev => prev.filter(v => v.id !== id));
-    } catch (err: any) {
-      setError(err.message);
+      await load();
+    } catch {
+      setError("Failed to update visit.");
     }
   }
 
@@ -217,9 +219,15 @@ export default function VisitList() {
                   </button>
 
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEdit(v.id);
+                    onClick={(e) => handleEdit(e, v.id)}
+                    style={{
+                      padding: "4px 10px",
+                      background: "transparent",
+                      border: "1px solid var(--border)",
+                      borderRadius: "var(--radius-sm)",
+                      fontSize: 11,
+                      color: "var(--teal)",
+                      cursor: "pointer",
                     }}
                   >
                     Edit
