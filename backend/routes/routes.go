@@ -14,4 +14,6 @@ func SetupRoutes() {
 	http.HandleFunc("/visit-details", handlers.GetVisitDetailsHandler)
 	http.HandleFunc("/delete-visit", handlers.DeleteVisitHandler)
 	http.HandleFunc("/update-visit", handlers.UpdateVisitHandler)
+	http.HandleFunc("/register", handlers.RegisterHandler)
+	http.HandleFunc("/login", handlers.LoginHandler)
 }

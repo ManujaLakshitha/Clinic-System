@@ -32,3 +32,10 @@ CREATE TABLE IF NOT EXISTS bills (
     visit_id INT REFERENCES visits(id) ON DELETE CASCADE,
     total NUMERIC
 );
+
+-- Users table
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    username TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL
+);
