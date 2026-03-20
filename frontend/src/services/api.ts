@@ -12,3 +12,8 @@ export const getVisits = async () => {
   const res = await fetch("http://localhost:8080/visits");
   return res.json();
 };
+
+export const getVisitDetails = async (id: number) => {
+  const res = await fetch(`http://localhost:8080/visit-details?id=${id}`);
+  return res.json();
+};
