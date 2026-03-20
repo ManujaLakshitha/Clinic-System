@@ -68,3 +68,36 @@ func GetVisitDetailsHandler(w http.ResponseWriter, r *http.Request) {
 		"notes":     notes,
 	})
 }
+
+func DeleteVisitHandler(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+
+	tx, err := config.DB.Begin()
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	defer tx.Rollback()
+
+	// Delete children first (safe even after fixing CASCADE)
+	tx.Exec("DELETE FROM bills WHERE visit_id=$1", id)
+	tx.Exec("DELETE FROM drugs WHERE visit_id=$1", id)
+	tx.Exec("DELETE FROM lab_tests WHERE visit_id=$1", id)
+	tx.Exec("DELETE FROM notes WHERE visit_id=$1", id)
+
+	_, err = tx.Exec("DELETE FROM visits WHERE id=$1", id)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"message": "deleted successfully",
+	})
+}
