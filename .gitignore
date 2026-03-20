@@ -1,5 +1,30 @@
+# Node
 node_modules/
+dist/
+build/
+
+# Env files
 .env
+.env.local
+.env.development
+.env.production
+
+# Logs
 *.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Go
 *.exe
+*.out
+*.test
 backend/vendor/
+
+# Vite cache
+node_modules/.vite
