@@ -11,6 +11,11 @@ import (
 func ProcessHandler(w http.ResponseWriter, r *http.Request) {
 	input := r.URL.Query().Get("text")
 
+	if input == "" {
+		http.Error(w, "text required", 400)
+		return
+	}
+
 	result, visitID, err := services.ProcessAndSave(input)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

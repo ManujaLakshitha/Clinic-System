@@ -2,8 +2,6 @@
 package services
 
 import (
-	"strings"
-
 	"clinic-system/repository"
 )
 
@@ -14,20 +12,10 @@ type ParseResponse struct {
 }
 
 func ProcessAndSave(input string) (ParseResponse, int, error) {
-	result := ParseResponse{}
 
-	words := strings.Split(input, ",")
-
-	for _, word := range words {
-		word = strings.TrimSpace(word)
-
-		if strings.Contains(strings.ToLower(word), "mg") {
-			result.Drugs = append(result.Drugs, word)
-		} else if strings.Contains(strings.ToLower(word), "test") {
-			result.LabTests = append(result.LabTests, word)
-		} else {
-			result.Notes = append(result.Notes, word)
-		}
+	result, err := CallAI(input)
+	if err != nil {
+		return result, 0, err
 	}
 
 	visitID, err := repository.CreateVisit()
@@ -36,15 +24,21 @@ func ProcessAndSave(input string) (ParseResponse, int, error) {
 	}
 
 	for _, d := range result.Drugs {
-		repository.SaveDrug(visitID, d)
+		if err := repository.SaveDrug(visitID, d); err != nil {
+			return result, 0, err
+		}
 	}
 
 	for _, t := range result.LabTests {
-		repository.SaveLabTest(visitID, t)
+		if err := repository.SaveLabTest(visitID, t); err != nil {
+			return result, 0, err
+		}
 	}
 
 	for _, n := range result.Notes {
-		repository.SaveNote(visitID, n)
+		if err := repository.SaveNote(visitID, n); err != nil {
+			return result, 0, err
+		}
 	}
 
 	return result, visitID, nil
