@@ -40,7 +40,9 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]int{
-		"user_id": id,
+	token, _ := services.GenerateToken(id)
+
+	json.NewEncoder(w).Encode(map[string]string{
+		"token": token,
 	})
 }

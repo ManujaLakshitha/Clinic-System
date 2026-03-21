@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"clinic-system/handlers"
+	"clinic-system/middleware"
 )
 
 func SetupRoutes() {
@@ -16,4 +17,6 @@ func SetupRoutes() {
 	http.HandleFunc("/update-visit", handlers.UpdateVisitHandler)
 	http.HandleFunc("/register", handlers.RegisterHandler)
 	http.HandleFunc("/login", handlers.LoginHandler)
+	http.HandleFunc("/visits", middleware.AuthMiddleware(handlers.GetVisitsHandler))
+	http.HandleFunc("/delete-visit", middleware.AuthMiddleware(handlers.DeleteVisitHandler))
 }

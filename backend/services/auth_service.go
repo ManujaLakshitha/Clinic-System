@@ -3,8 +3,19 @@ package services
 import (
 	"clinic-system/repository"
 
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
+
+var secretKey = []byte("mysecret")
+
+func GenerateToken(userID int) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id": userID,
+	})
+
+	return token.SignedString(secretKey)
+}
 
 func Register(username, password string) error {
 	// hash password
