@@ -20,6 +20,7 @@ export default function Home() {
   const navigate = useNavigate();
   const [result, setResult] = useState<ParseResponse | null>(null);
   const [visitId, setVisitId] = useState<number | null>(null);
+  const [visitDate, setVisitDate] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("new");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -35,9 +36,15 @@ export default function Home() {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
+  // When result is set, also set the visit date
+  const handleSetResult = (data: ParseResponse) => {
+    setResult(data);
+    setVisitDate(new Date().toISOString());
+  };
+
   return (
     <div style={{ display: "flex", minHeight: "100svh", width: "100%" }}>
-      {/* Mobile Menu Button - Always visible on mobile */}
+      {/* Mobile Menu Button */}
       <button
         onClick={toggleSidebar}
         className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-all"
@@ -61,7 +68,6 @@ export default function Home() {
         `}
       >
         <div className="flex flex-col h-full">
-          {/* Close button for mobile */}
           <button
             onClick={() => setIsSidebarOpen(false)}
             className="lg:hidden absolute top-4 right-4 p-2 text-gray-400 hover:text-white"
@@ -69,7 +75,6 @@ export default function Home() {
             <X size={20} />
           </button>
 
-          {/* Logo */}
           <div className="p-6 pb-8 border-b border-gray-800">
             <div className="flex items-center gap-3 mb-1">
               <div className="w-10 h-10 bg-teal-500 rounded-xl flex items-center justify-center">
@@ -84,7 +89,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-1">
             <button
               onClick={() => {
@@ -121,7 +125,6 @@ export default function Home() {
             </button>
           </nav>
 
-          {/* User Section */}
           <div className="px-4 py-4 border-t border-gray-800">
             <div className="flex items-center gap-3 px-3 py-2 mb-3">
               <div className="w-8 h-8 rounded-full bg-teal-500/20 border border-teal-500/30 flex items-center justify-center">
@@ -144,7 +147,6 @@ export default function Home() {
             </button>
           </div>
 
-          {/* Footer */}
           <div className="px-6 py-4 border-t border-gray-800">
             <p className="text-gray-500 text-xs text-center">
               Powered by ABC Clinic
@@ -153,14 +155,11 @@ export default function Home() {
         </div>
       </aside>
 
-      {/* Main Content - Add margin/padding for mobile */}
+      {/* Main Content */}
       <main className="flex-1 min-w-0 w-full">
-        {/* Top Bar - Add padding-top for mobile menu button */}
         <header className="sticky top-0 z-20 bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 pt-4 pb-4">
           <div className="flex items-center justify-between">
-            {/* Mobile spacer to account for menu button */}
             <div className="w-10 lg:hidden" />
-            
             <div className="text-center lg:text-left flex-1">
               <h1 className="text-lg sm:text-xl font-semibold text-gray-900">
                 {tab === "new" ? "New Visit" : "Visit History"}
@@ -171,7 +170,6 @@ export default function Home() {
                   : "Browse and manage past visits"}
               </p>
             </div>
-            
             <div className="flex items-center gap-2 bg-teal-50 border border-teal-200 rounded-full px-3 py-1.5">
               <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse" />
               <span className="text-xs sm:text-sm text-teal-700 font-medium whitespace-nowrap">
@@ -181,13 +179,12 @@ export default function Home() {
           </div>
         </header>
 
-        {/* Page Content - Add padding-top for mobile menu button */}
         <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           <div className="max-w-7xl mx-auto">
             {tab === "new" ? (
               <>
-                <InputBox setResult={setResult} setVisitId={setVisitId} />
-                <ResultView result={result} visitId={visitId} />
+                <InputBox setResult={handleSetResult} setVisitId={setVisitId} />
+                <ResultView result={result} visitId={visitId} visitDate={visitDate || undefined} />
               </>
             ) : (
               <VisitList />

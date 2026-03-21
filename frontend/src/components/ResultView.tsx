@@ -11,10 +11,12 @@ import {
 import type { ParseResponse } from "../types";
 import BillView from "./BillView";
 import { getBill } from "../services/api";
+import PrintBill from "./PrintBill";
 
 type ResultViewProps = {
   result: ParseResponse | null;
   visitId: number | null;
+  visitDate?: string;
 };
 
 type Category = {
@@ -53,14 +55,17 @@ const CATEGORIES: Category[] = [
   },
 ];
 
-export default function ResultView({ result, visitId }: ResultViewProps) {
+export default function ResultView({ result, visitId, visitDate }: ResultViewProps) {
   const [total, setTotal] = useState<number | null>(null);
   const [billingError, setBillingError] = useState<string | null>(null);
   const [billingLoad, setBillingLoad] = useState(false);
+  const [showPrintModal, setShowPrintModal] = useState(false);
 
   if (!result) return null;
 
-  const totalItems = result.drugs.length + result.lab_tests.length + result.notes.length;
+  const totalItems = (result.drugs?.length || 0) +
+    (result.lab_tests?.length || 0) +
+    (result.notes?.length || 0);
 
   const handleBill = async () => {
     if (!visitId) return;
@@ -73,6 +78,54 @@ export default function ResultView({ result, visitId }: ResultViewProps) {
       setBillingError("Failed to generate bill.");
     } finally {
       setBillingLoad(false);
+    }
+  };
+
+  const handlePrintBill = () => {
+    setShowPrintModal(true);
+  };
+
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const printContent = document.getElementById('print-bill-content');
+    if (printContent) {
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Bill - ABC Health Clinic</title>
+            <meta charset="utf-8" />
+            <style>
+              * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+              }
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', system-ui, sans-serif;
+                background: white;
+                padding: 20px;
+              }
+              @media print {
+                body {
+                  padding: 0;
+                }
+                .no-print {
+                  display: none !important;
+                }
+              }
+            </style>
+          </head>
+          <body>
+            ${printContent.innerHTML}
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+      printWindow.close();
     }
   };
 
@@ -104,19 +157,22 @@ export default function ResultView({ result, visitId }: ResultViewProps) {
           </button>
 
           <button
-            onClick={() => window.print()}
-            className="no-print px-3.5 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50 transition-all flex items-center gap-1.5"
+            onClick={handlePrintBill}
+            disabled={!total}
+            className="no-print px-3.5 py-1.5 bg-teal-600 text-white rounded-lg text-xs font-medium hover:bg-teal-700 transition-all flex items-center gap-1.5 disabled:opacity-50"
           >
             <Printer size={14} />
-            Print
+            Print Bill
           </button>
+
         </div>
       </div>
 
       {/* Three category cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {CATEGORIES.map(cat => {
-          const items = result[cat.key] as string[];
+          // Safely get items with fallback to empty array
+          const items = result[cat.key] || [];
           return (
             <div
               key={cat.key}
@@ -173,7 +229,43 @@ export default function ResultView({ result, visitId }: ResultViewProps) {
         </div>
       )}
 
-      <BillView total={total} drugs={result.drugs} tests={result.lab_tests} />
+      <BillView total={total} drugs={result.drugs || []} tests={result.lab_tests || []} />
+
+      {/* Print Bill Modal */}
+      {showPrintModal && total && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 no-print">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-gray-900">Print Bill Preview</h3>
+              <div className="flex gap-2">
+                <button
+                  onClick={handlePrint}
+                  className="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700 transition-all flex items-center gap-2"
+                >
+                  <Printer size={16} />
+                  Print
+                </button>
+                <button
+                  onClick={() => setShowPrintModal(false)}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-all"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+            <div className="p-6 bg-gray-50">
+              <PrintBill
+                visitId={visitId!}
+                visitDate={visitDate || new Date().toISOString()}
+                drugs={result.drugs || []}
+                labTests={result.lab_tests || []}
+                notes={result.notes || []}
+                total={total}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
