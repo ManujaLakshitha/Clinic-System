@@ -1,5 +1,14 @@
-//frontend/src/pages/Home.tsx
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { 
+  Stethoscope, 
+  History, 
+  LogOut, 
+  User, 
+  Sparkles,
+  Menu,
+  X
+} from "lucide-react";
 import InputBox from "../components/InputBox";
 import ResultView from "../components/ResultView";
 import VisitList from "../components/VisitList";
@@ -8,168 +17,182 @@ import type { ParseResponse } from "../types";
 type Tab = "new" | "history";
 
 export default function Home() {
-  const [result,  setResult]  = useState<ParseResponse | null>(null);
+  const navigate = useNavigate();
+  const [result, setResult] = useState<ParseResponse | null>(null);
   const [visitId, setVisitId] = useState<number | null>(null);
-  const [tab,     setTab]     = useState<Tab>("new");
+  const [tab, setTab] = useState<Tab>("new");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const userId = localStorage.getItem("user_id") ?? "—";
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user_id");
+    navigate("/login");
+  };
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
 
   return (
     <div style={{ display: "flex", minHeight: "100svh", width: "100%" }}>
+      {/* Mobile Menu Button - Always visible on mobile */}
+      <button
+        onClick={toggleSidebar}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-all"
+      >
+        <Menu size={20} className="text-gray-700" />
+      </button>
 
-      {/* ── Sidebar ── */}
-      <aside style={{
-        width: 220,
-        flexShrink: 0,
-        background: "var(--sidebar-bg)",
-        display: "flex",
-        flexDirection: "column",
-        padding: "24px 0",
-        position: "sticky",
-        top: 0,
-        height: "100svh",
-      }}>
-        {/* Logo */}
-        <div style={{ padding: "0 20px 28px" }}>
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            marginBottom: 4,
-          }}>
-            <div style={{
-              width: 32, height: 32,
-              background: "var(--teal)",
-              borderRadius: 8,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 16,
-            }}>⚕</div>
-            <span style={{
-              color: "var(--sidebar-text)",
-              fontWeight: 600,
-              fontSize: 15,
-              letterSpacing: "-0.3px",
-            }}>ABC Clinic</span>
+      {/* Overlay for mobile */}
+      {isSidebarOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-30"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`
+          fixed lg:sticky top-0 left-0 z-40 w-72 bg-gray-900 h-screen overflow-y-auto transition-transform duration-300
+          ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+        `}
+      >
+        <div className="flex flex-col h-full">
+          {/* Close button for mobile */}
+          <button
+            onClick={() => setIsSidebarOpen(false)}
+            className="lg:hidden absolute top-4 right-4 p-2 text-gray-400 hover:text-white"
+          >
+            <X size={20} />
+          </button>
+
+          {/* Logo */}
+          <div className="p-6 pb-8 border-b border-gray-800">
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-10 h-10 bg-teal-500 rounded-xl flex items-center justify-center">
+                <Stethoscope className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <span className="text-gray-100 font-semibold text-lg tracking-tight block">
+                  ABC Clinic
+                </span>
+                <span className="text-gray-400 text-xs">Notes & Billing</span>
+              </div>
+            </div>
           </div>
-          <p style={{ color: "var(--sidebar-muted)", fontSize: 11, paddingLeft: 42 }}>
-            Notes &amp; Billing
-          </p>
-        </div>
 
-        {/* Nav */}
-        <nav style={{ flex: 1, padding: "0 10px" }}>
-          {([
-            { id: "new",     icon: "✦", label: "New Visit"      },
-            { id: "history", icon: "◈", label: "Visit History"  },
-          ] as { id: Tab; icon: string; label: string }[]).map(item => (
+          {/* Navigation */}
+          <nav className="flex-1 px-4 py-6 space-y-1">
             <button
-              key={item.id}
-              onClick={() => setTab(item.id)}
-              style={{
-                width: "100%",
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "9px 12px",
-                borderRadius: 8,
-                border: "none",
-                cursor: "pointer",
-                background: tab === item.id ? "var(--sidebar-active)" : "transparent",
-                color: tab === item.id ? "var(--sidebar-text)" : "var(--sidebar-muted)",
-                fontSize: 13,
-                fontWeight: tab === item.id ? 500 : 400,
-                fontFamily: "inherit",
-                textAlign: "left",
-                marginBottom: 2,
-                transition: "all 0.15s",
-                borderLeft: tab === item.id
-                  ? "2px solid var(--sidebar-accent)"
-                  : "2px solid transparent",
+              onClick={() => {
+                setTab("new");
+                setIsSidebarOpen(false);
               }}
+              className={`
+                w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all
+                ${tab === "new"
+                  ? "bg-gray-800 text-teal-400 border-l-2 border-teal-500"
+                  : "text-gray-400 hover:bg-gray-800 hover:text-gray-200"
+                }
+              `}
             >
-              <span style={{ fontSize: 12, opacity: 0.8 }}>{item.icon}</span>
-              {item.label}
+              <Sparkles size={18} />
+              <span className="text-sm font-medium">New Visit</span>
             </button>
-          ))}
-        </nav>
 
-        {/* Footer */}
-        <div style={{
-          padding: "16px 20px 0",
-          borderTop: "1px solid #1e2233",
-          marginTop: 16,
-        }}>
-          <p style={{ color: "var(--sidebar-muted)", fontSize: 11 }}>
-            Powered by Claude AI
-          </p>
+            <button
+              onClick={() => {
+                setTab("history");
+                setIsSidebarOpen(false);
+              }}
+              className={`
+                w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all
+                ${tab === "history"
+                  ? "bg-gray-800 text-teal-400 border-l-2 border-teal-500"
+                  : "text-gray-400 hover:bg-gray-800 hover:text-gray-200"
+                }
+              `}
+            >
+              <History size={18} />
+              <span className="text-sm font-medium">Visit History</span>
+            </button>
+          </nav>
+
+          {/* User Section */}
+          <div className="px-4 py-4 border-t border-gray-800">
+            <div className="flex items-center gap-3 px-3 py-2 mb-3">
+              <div className="w-8 h-8 rounded-full bg-teal-500/20 border border-teal-500/30 flex items-center justify-center">
+                <User className="w-4 h-4 text-teal-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-gray-300 text-sm font-medium truncate">
+                  User #{userId}
+                </p>
+                <p className="text-gray-500 text-xs">Logged in</p>
+              </div>
+            </div>
+
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-red-900/30 hover:text-red-400 transition-all"
+            >
+              <LogOut size={16} />
+              Sign Out
+            </button>
+          </div>
+
+          {/* Footer */}
+          <div className="px-6 py-4 border-t border-gray-800">
+            <p className="text-gray-500 text-xs text-center">
+              Powered by ABC Clinic
+            </p>
+          </div>
         </div>
       </aside>
 
-      {/* ── Main content ── */}
-      <main style={{
-        flex: 1,
-        minWidth: 0,
-        display: "flex",
-        flexDirection: "column",
-      }}>
-
-        {/* Top bar */}
-        <header style={{
-          padding: "18px 32px",
-          borderBottom: "1px solid var(--border)",
-          background: "var(--surface)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-        }}>
-          <div>
-            <h1 style={{
-              fontSize: 18,
-              fontWeight: 600,
-              color: "var(--ink)",
-              letterSpacing: "-0.3px",
-            }}>
-              {tab === "new" ? "New Visit" : "Visit History"}
-            </h1>
-            <p style={{ color: "var(--ink-muted)", fontSize: 12, marginTop: 1 }}>
-              {tab === "new"
-                ? "Enter patient data — drugs, tests, and notes together"
-                : "Browse and manage past visits"}
-            </p>
-          </div>
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            background: "var(--teal-light)",
-            border: "1px solid var(--teal-mid)",
-            borderRadius: 99,
-            padding: "4px 12px 4px 8px",
-          }}>
-            <span style={{
-              width: 7, height: 7,
-              background: "var(--teal)",
-              borderRadius: "50%",
-              display: "inline-block",
-              animation: "pulse-dot 2s ease-in-out infinite",
-            }} />
-            <span style={{ color: "var(--teal-dark)", fontSize: 12, fontWeight: 500 }}>
-              AI Ready
-            </span>
+      {/* Main Content - Add margin/padding for mobile */}
+      <main className="flex-1 min-w-0 w-full">
+        {/* Top Bar - Add padding-top for mobile menu button */}
+        <header className="sticky top-0 z-20 bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 pt-4 pb-4">
+          <div className="flex items-center justify-between">
+            {/* Mobile spacer to account for menu button */}
+            <div className="w-10 lg:hidden" />
+            
+            <div className="text-center lg:text-left flex-1">
+              <h1 className="text-lg sm:text-xl font-semibold text-gray-900">
+                {tab === "new" ? "New Visit" : "Visit History"}
+              </h1>
+              <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+                {tab === "new"
+                  ? "Enter patient data — drugs, tests, and notes together"
+                  : "Browse and manage past visits"}
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-2 bg-teal-50 border border-teal-200 rounded-full px-3 py-1.5">
+              <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse" />
+              <span className="text-xs sm:text-sm text-teal-700 font-medium whitespace-nowrap">
+                AI Ready
+              </span>
+            </div>
           </div>
         </header>
 
-        {/* Page content */}
-        <div style={{ flex: 1, padding: "28px 32px", overflowY: "auto" }}>
-          {tab === "new" ? (
-            <>
-              <InputBox setResult={setResult} setVisitId={setVisitId} />
-              <ResultView result={result} visitId={visitId} />
-            </>
-          ) : (
-            <VisitList />
-          )}
+        {/* Page Content - Add padding-top for mobile menu button */}
+        <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <div className="max-w-7xl mx-auto">
+            {tab === "new" ? (
+              <>
+                <InputBox setResult={setResult} setVisitId={setVisitId} />
+                <ResultView result={result} visitId={visitId} />
+              </>
+            ) : (
+              <VisitList />
+            )}
+          </div>
         </div>
       </main>
     </div>

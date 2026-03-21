@@ -1,38 +1,66 @@
-//frontend/src/components/ResultView.tsx
 import { useState } from "react";
+import {
+  Pill,
+  Beaker,
+  FileText,
+  Receipt,
+  Printer,
+  Loader2,
+  AlertCircle
+} from "lucide-react";
 import type { ParseResponse } from "../types";
 import BillView from "./BillView";
 import { getBill } from "../services/api";
 
 type ResultViewProps = {
-  result:  ParseResponse | null;
+  result: ParseResponse | null;
   visitId: number | null;
 };
 
 type Category = {
-  key:    keyof Pick<ParseResponse, "drugs" | "lab_tests" | "notes">;
-  label:  string;
-  icon:   string;
-  color:  string;
-  bg:     string;
-  border: string;
+  key: keyof Pick<ParseResponse, "drugs" | "lab_tests" | "notes">;
+  label: string;
+  icon: React.ReactNode;
+  color: string;
+  bgColor: string;
+  borderColor: string;
 };
 
 const CATEGORIES: Category[] = [
-  { key: "drugs",     label: "Drugs & Dosages",         icon: "💊", color: "#b45309", bg: "#fffbeb", border: "#fde68a" },
-  { key: "lab_tests", label: "Lab Tests",               icon: "🔬", color: "#1d4ed8", bg: "#eff6ff", border: "#bfdbfe" },
-  { key: "notes",     label: "Clinical Notes",          icon: "📋", color: "#065f46", bg: "#f0fdfa", border: "#99f6e4" },
+  {
+    key: "drugs",
+    label: "Drugs & Dosages",
+    icon: <Pill size={14} />,
+    color: "text-amber-800",
+    bgColor: "bg-amber-50",
+    borderColor: "border-amber-200",
+  },
+  {
+    key: "lab_tests",
+    label: "Lab Tests",
+    icon: <Beaker size={14} />,
+    color: "text-blue-800",
+    bgColor: "bg-blue-50",
+    borderColor: "border-blue-200",
+  },
+  {
+    key: "notes",
+    label: "Clinical Notes",
+    icon: <FileText size={14} />,
+    color: "text-emerald-800",
+    bgColor: "bg-emerald-50",
+    borderColor: "border-emerald-200",
+  },
 ];
 
 export default function ResultView({ result, visitId }: ResultViewProps) {
-  const [total,        setTotal]        = useState<number | null>(null);
+  const [total, setTotal] = useState<number | null>(null);
   const [billingError, setBillingError] = useState<string | null>(null);
-  const [billingLoad,  setBillingLoad]  = useState(false);
+  const [billingLoad, setBillingLoad] = useState(false);
 
   if (!result) return null;
 
-  const totalItems =
-    result.drugs.length + result.lab_tests.length + result.notes.length;
+  const totalItems = result.drugs.length + result.lab_tests.length + result.notes.length;
 
   const handleBill = async () => {
     if (!visitId) return;
@@ -49,163 +77,85 @@ export default function ResultView({ result, visitId }: ResultViewProps) {
   };
 
   return (
-    <div className="fade-up">
+    <div className="space-y-5">
       {/* Summary bar */}
-      <div style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        marginBottom: 14,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--ink)" }}>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-gray-900">
             Classification Results
           </h2>
-          <span style={{
-            background: "var(--teal-light)",
-            color: "var(--teal-dark)",
-            border: "1px solid var(--teal-mid)",
-            borderRadius: 99,
-            padding: "2px 10px",
-            fontSize: 11,
-            fontWeight: 600,
-          }}>
+          <span className="bg-teal-50 text-teal-800 border border-teal-200 rounded-full px-2.5 py-0.5 text-xs font-semibold">
             {totalItems} items
           </span>
         </div>
 
-        <div style={{ display: "flex", gap: 8 }}>
+        <div className="flex gap-2">
           <button
             onClick={handleBill}
             disabled={billingLoad}
-            className="no-print"
-            style={{
-              padding: "7px 14px",
-              background: "var(--surface)",
-              border: "1px solid var(--border)",
-              borderRadius: "var(--radius-sm)",
-              fontSize: 12,
-              fontWeight: 500,
-              color: "var(--ink)",
-              cursor: "pointer",
-              fontFamily: "inherit",
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-            }}
+            className="no-print px-3.5 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50 transition-all flex items-center gap-1.5 disabled:opacity-50"
           >
-            {billingLoad ? "…" : "⊕"} Generate Bill
+            {billingLoad ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Receipt size={14} />
+            )}
+            Generate Bill
           </button>
 
           <button
             onClick={() => window.print()}
-            className="no-print"
-            style={{
-              padding: "7px 14px",
-              background: "var(--surface)",
-              border: "1px solid var(--border)",
-              borderRadius: "var(--radius-sm)",
-              fontSize: 12,
-              fontWeight: 500,
-              color: "var(--ink)",
-              cursor: "pointer",
-              fontFamily: "inherit",
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-            }}
+            className="no-print px-3.5 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50 transition-all flex items-center gap-1.5"
           >
-            ⎙ Print
+            <Printer size={14} />
+            Print
           </button>
         </div>
       </div>
 
       {/* Three category cards */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-        gap: 14,
-        marginBottom: 20,
-      }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {CATEGORIES.map(cat => {
           const items = result[cat.key] as string[];
           return (
-            <div key={cat.key} style={{
-              background: "var(--surface)",
-              border: "1px solid var(--border)",
-              borderRadius: "var(--radius-lg)",
-              overflow: "hidden",
-              boxShadow: "var(--shadow-sm)",
-            }}>
+            <div
+              key={cat.key}
+              className={`${cat.bgColor} border ${cat.borderColor} rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all`}
+            >
               {/* Card header */}
-              <div style={{
-                padding: "12px 16px",
-                background: cat.bg,
-                borderBottom: `1px solid ${cat.border}`,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                  <span style={{ fontSize: 14 }}>{cat.icon}</span>
-                  <span style={{
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: cat.color,
-                  }}>
+              <div
+                className={`px-4 py-3 border-b ${cat.borderColor} flex items-center justify-between`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className={cat.color}>{cat.icon}</span>
+                  <span className={`text-xs font-semibold ${cat.color}`}>
                     {cat.label}
                   </span>
                 </div>
-                <span style={{
-                  background: "white",
-                  color: cat.color,
-                  border: `1px solid ${cat.border}`,
-                  borderRadius: 99,
-                  padding: "1px 8px",
-                  fontSize: 11,
-                  fontWeight: 600,
-                  minWidth: 22,
-                  textAlign: "center",
-                }}>
+                <span
+                  className={`bg-white ${cat.color} border ${cat.borderColor} rounded-full px-2 py-0.5 text-xs font-semibold min-w-[28px] text-center`}
+                >
                   {items.length}
                 </span>
               </div>
 
               {/* Items */}
-              <div style={{ padding: 12, minHeight: 60 }}>
+              <div className="p-3 min-h-[100px] max-h-[200px] overflow-y-auto">
                 {items.length === 0 ? (
-                  <p style={{
-                    color: "var(--ink-faint)",
-                    fontSize: 12,
-                    textAlign: "center",
-                    padding: "8px 0",
-                  }}>
+                  <p className="text-gray-400 text-xs text-center py-4">
                     None identified
                   </p>
                 ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <div className="space-y-2">
                     {items.map((item, i) => (
-                      <div key={i} style={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        gap: 8,
-                        padding: "6px 10px",
-                        background: "var(--surface-2)",
-                        borderRadius: "var(--radius-sm)",
-                        fontSize: 13,
-                        color: "var(--ink)",
-                        lineHeight: 1.4,
-                      }}>
-                        <span style={{
-                          color: cat.color,
-                          fontWeight: 700,
-                          fontSize: 10,
-                          marginTop: 3,
-                          flexShrink: 0,
-                        }}>
+                      <div
+                        key={i}
+                        className="flex items-start gap-2 p-2 bg-white rounded-lg text-sm text-gray-700 hover:shadow-sm transition-all"
+                      >
+                        <span className={`${cat.color} font-bold text-xs mt-0.5 flex-shrink-0`}>
                           {String(i + 1).padStart(2, "0")}
                         </span>
-                        {item}
+                        <span className="text-xs break-words flex-1">{item}</span>
                       </div>
                     ))}
                   </div>
@@ -217,9 +167,10 @@ export default function ResultView({ result, visitId }: ResultViewProps) {
       </div>
 
       {billingError && (
-        <p style={{ color: "var(--red)", fontSize: 12, marginBottom: 12 }}>
-          ⚠ {billingError}
-        </p>
+        <div className="flex items-center gap-2 text-red-600 text-xs bg-red-50 p-3 rounded-lg">
+          <AlertCircle size={14} />
+          {billingError}
+        </div>
       )}
 
       <BillView total={total} drugs={result.drugs} tests={result.lab_tests} />

@@ -1,5 +1,16 @@
-//frontend/src/components/VisitList.tsx
 import { useEffect, useState } from "react";
+import { 
+  History, 
+  RefreshCw, 
+  Trash2, 
+  Edit2, 
+  X, 
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+  AlertCircle
+} from "lucide-react";
 import { deleteVisit, getVisitDetails, getVisits, updateVisit } from "../services/api";
 import type { VisitSummary, VisitDetails } from "../types";
 
@@ -9,8 +20,13 @@ export default function VisitList() {
   const [activeId, setActiveId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editNote, setEditNote] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   async function load() {
     setLoading(true);
@@ -24,12 +40,23 @@ export default function VisitList() {
     }
   }
 
+  async function handleRefresh() {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  }
+
   async function handleSelect(id: number) {
-    if (activeId === id) { setSelected(null); setActiveId(null); return; }
+    if (activeId === id) {
+      setSelected(null);
+      setActiveId(null);
+      return;
+    }
     try {
       const data = await getVisitDetails(id);
       setSelected(data);
       setActiveId(id);
+      setEditingId(null);
     } catch (err: any) {
       setError(err.message);
     }
@@ -37,249 +64,268 @@ export default function VisitList() {
 
   async function handleDelete(e: React.MouseEvent, id: number) {
     e.stopPropagation();
-    if (!window.confirm(`Delete visit #${id}?`)) return;
+    if (!window.confirm(`Delete visit #${id}? This action cannot be undone.`)) return;
     try {
       await deleteVisit(id);
-      if (activeId === id) { setSelected(null); setActiveId(null); }
+      if (activeId === id) {
+        setSelected(null);
+        setActiveId(null);
+      }
       setVisits(prev => prev.filter(v => v.id !== id));
     } catch (err: any) {
       setError(err.message);
     }
   }
 
-  async function handleEdit(e: React.MouseEvent, id: number) {
+  function handleEditStart(e: React.MouseEvent, id: number, currentNote: string) {
     e.stopPropagation();
+    setEditingId(id);
+    setEditNote(currentNote);
+  }
 
-    const newNote = prompt("Enter new note:");
-    if (!newNote) return;
+  async function handleEditSave(e: React.MouseEvent, id: number) {
+    e.stopPropagation();
+    if (!editNote.trim()) return;
 
     try {
-      await updateVisit(id, [newNote]);
+      await updateVisit(id, [editNote]);
       await load();
-    } catch {
-      setError("Failed to update visit.");
+      if (activeId === id) {
+        const updated = await getVisitDetails(id);
+        setSelected(updated);
+      }
+      setEditingId(null);
+      setEditNote("");
+    } catch (err: any) {
+      setError(err.message);
     }
+  }
+
+  function handleEditCancel(e: React.MouseEvent) {
+    e.stopPropagation();
+    setEditingId(null);
+    setEditNote("");
   }
 
   function fmt(iso: string) {
     return new Date(iso).toLocaleString("en-GB", {
-      day: "2-digit", month: "short", year: "numeric",
-      hour: "2-digit", minute: "2-digit",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   }
 
-  const totalItems = (d: VisitDetails) =>
-    d.drugs.length + d.lab_tests.length + d.notes.length;
-
   return (
-    <div>
+    <div className="space-y-4">
       {/* Header */}
-      <div style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        marginBottom: 16,
-      }}>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--ink)" }}>
+          <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+            <History size={16} />
             Visit History
           </h2>
-          <p style={{ fontSize: 12, color: "var(--ink-muted)", marginTop: 2 }}>
+          <p className="text-xs text-gray-500 mt-0.5">
             {visits.length} visit{visits.length !== 1 ? "s" : ""} recorded
           </p>
         </div>
         <button
-          onClick={load}
-          style={{
-            padding: "6px 14px",
-            background: "var(--surface)",
-            border: "1px solid var(--border)",
-            borderRadius: "var(--radius-sm)",
-            fontSize: 12,
-            color: "var(--ink-muted)",
-            cursor: "pointer",
-            fontFamily: "inherit",
-          }}
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="px-3.5 py-1.5 bg-white border border-gray-300 rounded-lg text-xs text-gray-600 hover:bg-gray-50 transition-all flex items-center gap-1.5 disabled:opacity-50 w-full sm:w-auto justify-center"
         >
-          ↻ Refresh
+          <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
+          Refresh
         </button>
       </div>
 
       {error && (
-        <div style={{
-          padding: "10px 14px",
-          background: "var(--red-light)",
-          border: "1px solid #fecaca",
-          borderRadius: "var(--radius-sm)",
-          color: "var(--red)",
-          fontSize: 12,
-          marginBottom: 14,
-        }}>
-          ⚠ {error}
+        <div className="flex items-center gap-2 px-3.5 py-2.5 bg-red-50 border border-red-200 rounded-lg text-red-600 text-xs">
+          <AlertCircle size={14} />
+          {error}
         </div>
       )}
 
       {loading ? (
-        <div style={{ textAlign: "center", padding: "40px 0", color: "var(--ink-muted)", fontSize: 13 }}>
-          Loading…
+        <div className="text-center py-12">
+          <Loader2 size={32} className="animate-spin text-gray-400 mx-auto mb-2" />
+          <p className="text-gray-500 text-sm">Loading visits...</p>
         </div>
       ) : visits.length === 0 ? (
-        <div style={{
-          textAlign: "center",
-          padding: "60px 20px",
-          background: "var(--surface)",
-          border: "1px solid var(--border)",
-          borderRadius: "var(--radius-lg)",
-          color: "var(--ink-muted)",
-          fontSize: 13,
-        }}>
-          <div style={{ fontSize: 32, marginBottom: 8, opacity: 0.3 }}>◈</div>
-          No visits recorded yet.
-          <br />Switch to <strong>New Visit</strong> to create one.
+        <div className="text-center py-16 bg-white border border-gray-200 rounded-xl">
+          <History size={48} className="mx-auto mb-3 text-gray-300" />
+          <p className="text-gray-500 text-sm">No visits recorded yet.</p>
+          <p className="text-gray-400 text-xs mt-1">
+            Switch to <strong>New Visit</strong> to create one.
+          </p>
         </div>
       ) : (
-        <div style={{
-          background: "var(--surface)",
-          border: "1px solid var(--border)",
-          borderRadius: "var(--radius-lg)",
-          overflow: "hidden",
-          boxShadow: "var(--shadow-sm)",
-        }}>
-          {/* Table head */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "60px 1fr 1fr auto",
-            padding: "10px 16px",
-            background: "var(--surface-2)",
-            borderBottom: "1px solid var(--border)",
-          }}>
+        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+          {/* Desktop Table Head */}
+          <div className="hidden md:grid grid-cols-[80px_1fr_1fr_auto] px-4 py-3 bg-gray-50 border-b border-gray-200">
             {["ID", "Date & Time", "Summary", "Actions"].map(h => (
-              <span key={h} style={{
-                fontSize: 11,
-                fontWeight: 600,
-                color: "var(--ink-muted)",
-                textTransform: "uppercase",
-                letterSpacing: "0.4px",
-                textAlign: h === "Actions" ? "right" : "left",
-              }}>{h}</span>
+              <span
+                key={h}
+                className={`text-xs font-semibold text-gray-500 uppercase tracking-wide ${
+                  h === "Actions" ? "text-right" : "text-left"
+                }`}
+              >
+                {h}
+              </span>
             ))}
           </div>
 
           {/* Rows */}
           {visits.map((v, idx) => (
-            <div key={v.id}>
+            <div key={v.id} className="border-b border-gray-100 last:border-0">
               <div
                 onClick={() => handleSelect(v.id)}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "60px 1fr 1fr auto",
-                  padding: "13px 16px",
-                  borderBottom: idx < visits.length - 1 ? "1px solid var(--border)" : "none",
-                  cursor: "pointer",
-                  background: activeId === v.id ? "var(--teal-light)" : "var(--surface)",
-                  transition: "background 0.15s",
-                  alignItems: "center",
-                }}
+                className={`
+                  p-4 cursor-pointer transition-all hover:bg-gray-50
+                  md:grid md:grid-cols-[80px_1fr_1fr_auto] md:gap-4
+                  ${activeId === v.id ? "bg-teal-50" : "bg-white"}
+                `}
               >
-                <span style={{
-                  fontFamily: "'DM Mono', monospace",
-                  fontSize: 12,
-                  color: "var(--ink-muted)",
-                  fontWeight: 500,
-                }}>
-                  #{v.id}
-                </span>
+                {/* Mobile View */}
+                <div className="md:hidden space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-sm font-semibold text-gray-700">
+                      Visit #{v.id}
+                    </span>
+                    {activeId === v.id ? (
+                      <ChevronUp size={16} className="text-gray-400" />
+                    ) : (
+                      <ChevronDown size={16} className="text-gray-400" />
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-500">{fmt(v.created_at)}</div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-400">
+                      {activeId === v.id && selected
+                        ? `${selected.drugs.length} drugs · ${selected.lab_tests.length} tests · ${selected.notes.length} notes`
+                        : "Tap to expand"}
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={e => {
+                          const note = selected?.notes?.[0] || "";
+                          handleEditStart(e, v.id, note);
+                        }}
+                        className="p-1.5 text-teal-600 hover:bg-teal-50 rounded-lg transition-all"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                      <button
+                        onClick={e => handleDelete(e, v.id)}
+                        className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
-                <span style={{ fontSize: 13, color: "var(--ink)" }}>
-                  {fmt(v.created_at)}
-                </span>
-
-                <span style={{ fontSize: 12, color: "var(--ink-muted)" }}>
-                  {activeId === v.id && selected
-                    ? `${selected.drugs.length} drugs · ${selected.lab_tests.length} tests · ${selected.notes.length} notes`
-                    : "Click to expand"}
-                </span>
-
-                <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                {/* Desktop View */}
+                <div className="hidden md:flex md:items-center">
+                  <span className="font-mono text-sm font-medium text-gray-700">
+                    #{v.id}
+                  </span>
+                </div>
+                <div className="hidden md:block">
+                  <span className="text-sm text-gray-900">{fmt(v.created_at)}</span>
+                </div>
+                <div className="hidden md:block">
+                  <span className="text-xs text-gray-500">
+                    {activeId === v.id && selected
+                      ? `${selected.drugs.length} drugs · ${selected.lab_tests.length} tests · ${selected.notes.length} notes`
+                      : "Click to expand"}
+                  </span>
+                </div>
+                <div className="hidden md:flex gap-1.5 justify-end">
                   <button
-                    onClick={(e) => handleDelete(e, v.id)}
-                    style={{
-                      padding: "4px 10px",
-                      background: "transparent",
-                      border: "1px solid var(--border)",
-                      borderRadius: "var(--radius-sm)",
-                      fontSize: 11,
-                      color: "var(--red)",
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                      fontWeight: 500,
+                    onClick={e => {
+                      const note = selected?.notes?.[0] || "";
+                      handleEditStart(e, v.id, note);
                     }}
+                    className="p-1.5 text-teal-600 hover:bg-teal-50 rounded-lg transition-all"
+                    title="Edit Note"
                   >
-                    Delete
+                    <Edit2 size={14} />
                   </button>
-
                   <button
-                    onClick={(e) => handleEdit(e, v.id)}
-                    style={{
-                      padding: "4px 10px",
-                      background: "transparent",
-                      border: "1px solid var(--border)",
-                      borderRadius: "var(--radius-sm)",
-                      fontSize: 11,
-                      color: "var(--teal)",
-                      cursor: "pointer",
-                    }}
+                    onClick={e => handleDelete(e, v.id)}
+                    className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                    title="Delete Visit"
                   >
-                    Edit
+                    <Trash2 size={14} />
                   </button>
                 </div>
               </div>
 
               {/* Expanded detail row */}
-              {activeId === v.id && selected && (
-                <div className="fade-up" style={{
-                  padding: "16px 20px",
-                  background: "var(--teal-light)",
-                  borderBottom: idx < visits.length - 1 ? "1px solid var(--teal-mid)" : "none",
-                }}>
-                  <div style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(3, 1fr)",
-                    gap: 12,
-                  }}>
-                    {([
+              {activeId === v.id && selected && editingId !== v.id && (
+                <div className="px-4 py-4 bg-teal-50 border-t border-teal-200">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {[
                       { label: "💊 Drugs", items: selected.drugs },
                       { label: "🔬 Lab Tests", items: selected.lab_tests },
                       { label: "📋 Notes", items: selected.notes },
-                    ] as { label: string; items: string[] }[]).map(col => (
+                    ].map(col => (
                       <div key={col.label}>
-                        <p style={{
-                          fontSize: 11,
-                          fontWeight: 600,
-                          color: "var(--teal-dark)",
-                          marginBottom: 6,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.4px",
-                        }}>
+                        <p className="text-xs font-semibold text-teal-800 mb-2 uppercase tracking-wide">
                           {col.label}
                         </p>
                         {col.items.length === 0 ? (
-                          <p style={{ fontSize: 12, color: "var(--ink-faint)" }}>—</p>
-                        ) : col.items.map((item, i) => (
-                          <div key={i} style={{
-                            fontSize: 12,
-                            color: "var(--ink)",
-                            padding: "4px 8px",
-                            background: "white",
-                            borderRadius: 5,
-                            marginBottom: 4,
-                            border: "1px solid var(--teal-mid)",
-                          }}>
-                            {item}
+                          <p className="text-xs text-gray-500 italic">—</p>
+                        ) : (
+                          <div className="space-y-1.5">
+                            {col.items.map((item, i) => (
+                              <div
+                                key={i}
+                                className="text-xs text-gray-700 p-2 bg-white rounded-lg break-words"
+                              >
+                                {item}
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        )}
                       </div>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Edit form */}
+              {editingId === v.id && (
+                <div className="px-4 py-4 bg-teal-50 border-t border-teal-200">
+                  <div className="max-w-md">
+                    <label className="block text-xs font-semibold text-teal-800 mb-2">
+                      Edit Note
+                    </label>
+                    <textarea
+                      value={editNote}
+                      onChange={e => setEditNote(e.target.value)}
+                      className="w-full px-3 py-2 border border-teal-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+                      rows={3}
+                      autoFocus
+                    />
+                    <div className="flex gap-2 mt-3">
+                      <button
+                        onClick={e => handleEditSave(e, v.id)}
+                        className="px-3 py-1.5 bg-teal-600 text-white rounded-lg text-xs font-medium hover:bg-teal-700 flex items-center gap-1.5"
+                      >
+                        <Check size={12} />
+                        Save Changes
+                      </button>
+                      <button
+                        onClick={handleEditCancel}
+                        className="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-medium hover:bg-gray-50 flex items-center gap-1.5"
+                      >
+                        <X size={12} />
+                        Cancel
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}

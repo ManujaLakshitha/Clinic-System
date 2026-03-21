@@ -1,21 +1,31 @@
-//frontend/src/components/InputBox.tsx
 import { useState, useRef } from "react";
+import { 
+  Sparkles, 
+  Send, 
+  Mic, 
+  AlertCircle,
+  Command
+} from "lucide-react";
 import { processText } from "../services/api";
 import type { ParseResponse } from "../types";
 
 type InputBoxProps = {
-  setResult:  (data: ParseResponse) => void;
+  setResult: (data: ParseResponse) => void;
   setVisitId: (id: number) => void;
 };
 
 export default function InputBox({ setResult, setVisitId }: InputBoxProps) {
-  const [input,   setInput]   = useState("");
+  const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSubmit = async () => {
-    if (!input.trim()) { setError("Please enter patient data first."); return; }
+    if (!input.trim()) {
+      setError("Please enter patient data first.");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -25,160 +35,130 @@ export default function InputBox({ setResult, setVisitId }: InputBoxProps) {
       setInput("");
       textareaRef.current?.blur();
     } catch {
-      setError("Classification failed. Make sure the backend is running and ANTHROPIC_API_KEY is set.");
+      setError("Classification failed. Make sure the backend is running.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const startRecording = () => {
+    if ('webkitSpeechRecognition' in window) {
+      const recognition = new (window as any).webkitSpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+
+      recognition.onstart = () => {
+        setIsRecording(true);
+      };
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setInput(prev => prev ? `${prev} ${transcript}` : transcript);
+        setIsRecording(false);
+      };
+
+      recognition.onerror = () => {
+        setIsRecording(false);
+        setError("Error with speech recognition. Please try again.");
+      };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
+
+      recognition.start();
+    } else {
+      setError("Speech recognition is not supported in your browser.");
     }
   };
 
   const charCount = input.length;
 
   return (
-    <div style={{
-      background: "var(--surface)",
-      borderRadius: "var(--radius-lg)",
-      border: "1px solid var(--border)",
-      boxShadow: "var(--shadow-sm)",
-      overflow: "hidden",
-      marginBottom: 24,
-    }}>
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6 transition-all hover:shadow-md">
       {/* Card header */}
-      <div style={{
-        padding: "16px 20px",
-        borderBottom: "1px solid var(--surface-3)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{
-            width: 28, height: 28,
-            background: "var(--teal-light)",
-            borderRadius: 7,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 13, color: "var(--teal)",
-          }}>✦</div>
+      <div className="px-4 sm:px-5 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 bg-teal-50 rounded-lg flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-teal-600" />
+          </div>
           <div>
-            <p style={{ fontWeight: 600, fontSize: 13, color: "var(--ink)" }}>
+            <p className="font-semibold text-sm text-gray-900">
               Unified Clinical Input
             </p>
-            <p style={{ fontSize: 11, color: "var(--ink-muted)" }}>
+            <p className="text-xs text-gray-500 hidden sm:block">
               Type everything together — drugs, tests, observations
             </p>
           </div>
         </div>
-        <span style={{
-          fontSize: 11,
-          color: "var(--ink-faint)",
-          fontFamily: "'DM Mono', monospace",
-        }}>
-          {charCount} chars
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-400 font-mono">{charCount} chars</span>
+          <button
+            onClick={startRecording}
+            disabled={isRecording}
+            className={`p-1.5 rounded-lg transition-all ${
+              isRecording 
+                ? 'bg-red-100 text-red-600 animate-pulse' 
+                : 'hover:bg-gray-100 text-gray-500'
+            }`}
+            title="Voice Input"
+          >
+            <Mic size={16} />
+          </button>
+        </div>
       </div>
 
       {/* Textarea */}
-      <div style={{ position: "relative" }}>
+      <div className="relative">
         <textarea
           ref={textareaRef}
           rows={5}
           value={input}
           onChange={e => setInput(e.target.value)}
           disabled={loading}
-          onKeyDown={e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSubmit(); }}
-          placeholder={"e.g. paracetamol 500mg TDS x5 days, FBC, blood glucose, fever 38°C, review in 1 week"}
-          style={{
-            width: "100%",
-            padding: "16px 20px",
-            border: "none",
-            outline: "none",
-            resize: "none",
-            fontFamily: "'DM Sans', sans-serif",
-            fontSize: 14,
-            lineHeight: 1.7,
-            color: "var(--ink)",
-            background: loading ? "var(--surface-2)" : "var(--surface)",
-            transition: "background 0.2s",
+          onKeyDown={e => {
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSubmit();
           }}
+          placeholder="e.g. paracetamol 500mg TDS x5 days, FBC, blood glucose, fever 38°C, review in 1 week"
+          className={`w-full px-4 sm:px-5 py-4 border-none outline-none resize-none font-sans text-sm leading-relaxed text-gray-900 ${
+            loading ? "bg-gray-50" : "bg-white"
+          }`}
         />
       </div>
 
       {/* Footer bar */}
-      <div style={{
-        padding: "12px 20px",
-        borderTop: "1px solid var(--surface-3)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        background: "var(--surface-2)",
-      }}>
-        <p style={{ fontSize: 11, color: "var(--ink-faint)" }}>
-          Press <kbd style={{
-            background: "var(--surface-3)",
-            border: "1px solid var(--border)",
-            borderRadius: 4,
-            padding: "1px 5px",
-            fontFamily: "'DM Mono', monospace",
-            fontSize: 10,
-          }}>⌘ Enter</kbd> to classify
+      <div className="px-4 sm:px-5 py-3 border-t border-gray-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-gray-50">
+        <p className="text-xs text-gray-400 flex items-center gap-1.5">
+          <Command size={12} />
+          <span>+ Enter to classify</span>
         </p>
 
         <button
           onClick={handleSubmit}
           disabled={loading}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 7,
-            padding: "8px 18px",
-            background: loading ? "var(--surface-3)" : "var(--teal)",
-            color: loading ? "var(--ink-muted)" : "white",
-            border: "none",
-            borderRadius: "var(--radius-sm)",
-            fontSize: 13,
-            fontWeight: 600,
-            fontFamily: "inherit",
-            cursor: loading ? "not-allowed" : "pointer",
-            transition: "all 0.2s",
-            letterSpacing: "-0.1px",
-          }}
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2 bg-teal-600 text-white rounded-lg text-sm font-semibold hover:bg-teal-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? (
             <>
-              <span style={{
-                width: 12, height: 12,
-                border: "2px solid var(--border-strong)",
-                borderTopColor: "var(--teal)",
-                borderRadius: "50%",
-                display: "inline-block",
-                animation: "spin 0.7s linear infinite",
-              }} />
-              Classifying…
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              Classifying...
             </>
           ) : (
-            <>✦ Classify with AI</>
+            <>
+              <Send size={16} />
+              Classify with AI
+            </>
           )}
         </button>
       </div>
 
       {error && (
-        <div style={{
-          padding: "10px 20px",
-          background: "var(--red-light)",
-          borderTop: "1px solid #fecaca",
-          fontSize: 12,
-          color: "var(--red)",
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-        }}>
-          ⚠ {error}
+        <div className="px-4 sm:px-5 py-2.5 bg-red-50 border-t border-red-200 text-xs text-red-600 flex items-center gap-1.5">
+          <AlertCircle size={14} />
+          {error}
         </div>
       )}
-
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        textarea::placeholder { color: var(--ink-faint); }
-      `}</style>
     </div>
   );
 }
