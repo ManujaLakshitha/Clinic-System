@@ -1,10 +1,10 @@
-import {
-  Stethoscope,
-  Receipt,
-  Calendar,
-  User,
-  Pill,
-  Beaker,
+import { 
+  Stethoscope, 
+  Receipt, 
+  Calendar, 
+  User, 
+  Pill, 
+  Beaker, 
   FileText,
   Phone,
   MapPin,
@@ -25,14 +25,14 @@ const DRUG_PRICE = 50;
 const TEST_PRICE = 200;
 const CONSULTATION_FEE = 500;
 
-export default function PrintBill({
-  visitId,
-  visitDate,
-  drugs,
-  labTests,
-  notes,
+export default function PrintBill({ 
+  visitId, 
+  visitDate, 
+  drugs, 
+  labTests, 
+  notes, 
 }: PrintBillProps) {
-
+  
   const drugTotal = drugs.length * DRUG_PRICE;
   const testTotal = labTests.length * TEST_PRICE;
   const grandTotal = CONSULTATION_FEE + drugTotal + testTotal;
@@ -59,7 +59,7 @@ export default function PrintBill({
         <div className="bg-gradient-to-r from-teal-700 to-teal-500 px-8 py-6 text-white relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full -ml-24 -mb-24" />
-
+          
           <div className="relative z-10">
             <div className="flex justify-between items-start mb-6">
               <div className="flex items-center gap-3">
@@ -76,7 +76,7 @@ export default function PrintBill({
                   <Receipt className="w-4 h-4" />
                   <span className="text-sm font-mono font-semibold">BILL #{visitId}</span>
                 </div>
-
+              
               </div>
             </div>
 
@@ -130,7 +130,7 @@ export default function PrintBill({
         {/* Bill Items */}
         <div className="px-8 py-6">
           <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">Bill Details</h3>
-
+          
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -233,7 +233,7 @@ export default function PrintBill({
                   <span className="text-gray-600">Subtotal:</span>
                   <span className="font-mono">{formatCurrency(CONSULTATION_FEE + drugTotal + testTotal)}</span>
                 </div>
-
+                
                 <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-200">
                   <span className="text-gray-900">Total Amount:</span>
                   <span className="text-teal-600 font-mono text-xl">{formatCurrency(grandTotal)}</span>
@@ -253,27 +253,20 @@ export default function PrintBill({
 
       <style>{`
         @media print {
-  body * {
-    visibility: hidden;
-  }
-
-  #print-bill-content,
-  #print-bill-content * {
-    visibility: visible;
-  }
-
-  #print-bill-content {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-  }
-
-  #print-bill-content * {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-}
+          .print-bill-container {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            margin: 0;
+            padding: 20px;
+            background: white;
+          }
+          
+          .print-bill-container * {
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+          }
           
           @page {
             size: A4;
