@@ -6,6 +6,8 @@ import (
 
 	"clinic-system/config"
 	"clinic-system/routes"
+
+	"github.com/joho/godotenv"
 )
 
 func enableCORS(next http.Handler) http.Handler {
@@ -25,6 +27,7 @@ func enableCORS(next http.Handler) http.Handler {
 }
 
 func main() {
+	godotenv.Load()
 	config.InitDB()
 	routes.SetupRoutes()
 

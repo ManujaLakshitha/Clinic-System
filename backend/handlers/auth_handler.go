@@ -13,7 +13,20 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		Password string `json:"password"`
 	}
 
-	json.NewDecoder(r.Body).Decode(&data)
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", 405)
+		return
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		http.Error(w, "invalid request", 400)
+		return
+	}
+
+	if data.Username == "" || data.Password == "" {
+		http.Error(w, "missing fields", 400)
+		return
+	}
 
 	err := services.Register(data.Username, data.Password)
 	if err != nil {
@@ -32,7 +45,15 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		Password string `json:"password"`
 	}
 
-	json.NewDecoder(r.Body).Decode(&data)
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", 405)
+		return
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		http.Error(w, "invalid request", 400)
+		return
+	}
 
 	id, err := services.Login(data.Username, data.Password)
 	if err != nil {
@@ -40,9 +61,14 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, _ := services.GenerateToken(id)
+	token, err := services.GenerateToken(id)
+	if err != nil {
+		http.Error(w, "token error", 500)
+		return
+	}
 
-	json.NewEncoder(w).Encode(map[string]string{
-		"token": token,
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"token":   token,
+		"user_id": id,
 	})
 }
