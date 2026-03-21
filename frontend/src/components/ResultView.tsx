@@ -72,10 +72,6 @@ export default function ResultView({ result, visitId, visitDate, setVisitId }: R
 
   if (!result || !editable) return null;
 
-  const totalItems = (result.drugs?.length || 0) +
-    (result.lab_tests?.length || 0) +
-    (result.notes?.length || 0);
-
   const updateItem = (type: "drugs" | "lab_tests" | "notes", index: number, value: string) => {
     const currentArray = editable[type] as string[];
     const copy = [...currentArray];
@@ -111,14 +107,14 @@ export default function ResultView({ result, visitId, visitDate, setVisitId }: R
       console.log("Success data:", data);
 
       if (data && data.visit_id) {
-        alert("✅ Saved Successfully! Visit ID: " + data.visit_id);
+        alert("Saved Successfully! Visit ID: " + data.visit_id);
         setVisitId(data.visit_id);
       } else {
         throw new Error("Invalid response from server");
       }
     } catch (error) {
       console.error("Save Error Detail:", error);
-      alert("❌ Save failed. Check console for details.");
+      alert("Save failed. Check console for details.");
     } finally {
       setLoading(false);
     }
@@ -136,10 +132,6 @@ export default function ResultView({ result, visitId, visitDate, setVisitId }: R
     } finally {
       setBillingLoad(false);
     }
-  };
-
-  const handlePrintBill = () => {
-    setShowPrintModal(true);
   };
 
   const handlePrint = () => {

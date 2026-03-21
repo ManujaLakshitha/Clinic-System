@@ -2,7 +2,7 @@
 -- Visits table
 CREATE TABLE IF NOT EXISTS visits (
     id SERIAL PRIMARY KEY,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Drugs table

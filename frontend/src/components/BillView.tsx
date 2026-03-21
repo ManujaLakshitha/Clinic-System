@@ -1,4 +1,4 @@
-import { Receipt, Printer, FileDown } from "lucide-react";
+import { Receipt, Printer } from "lucide-react";
 
 const DRUG_PRICE = 50;
 const TEST_PRICE = 200;

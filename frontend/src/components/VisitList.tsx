@@ -1,10 +1,10 @@
 import { useEffect, useState, useMemo } from "react";
-import { 
-  History, 
-  RefreshCw, 
-  Trash2, 
-  Edit2, 
-  X, 
+import {
+  History,
+  RefreshCw,
+  Trash2,
+  Edit2,
+  X,
   Check,
   ChevronDown,
   ChevronUp,
@@ -14,7 +14,6 @@ import {
   Filter,
   ChevronLeft,
   ChevronRight,
-  Calendar
 } from "lucide-react";
 import { deleteVisit, getVisitDetails, getVisits, updateVisit } from "../services/api";
 import type { VisitSummary, VisitDetails } from "../types";
@@ -28,12 +27,12 @@ export default function VisitList() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editNote, setEditNote] = useState("");
   const [refreshing, setRefreshing] = useState(false);
-  
+
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFilter, setDateFilter] = useState<"all" | "today" | "week" | "month">("all");
   const [showFilters, setShowFilters] = useState(false);
-  
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -124,32 +123,34 @@ export default function VisitList() {
 
   function fmt(iso: string) {
     if (!iso) return "Invalid date";
+
     return new Date(iso).toLocaleString("en-GB", {
       day: "2-digit",
       month: "short",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
+      hour12: true,
     });
   }
 
   // Filter visits based on search term and date filter
   const filteredVisits = useMemo(() => {
     let filtered = [...visits];
-    
+
     // Search filter (by ID)
     if (searchTerm) {
-      filtered = filtered.filter(v => 
+      filtered = filtered.filter(v =>
         v.id.toString().includes(searchTerm.toLowerCase())
       );
     }
-    
+
     // Date filter
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
     const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-    
+
     switch (dateFilter) {
       case "today":
         filtered = filtered.filter(v => {
@@ -172,7 +173,7 @@ export default function VisitList() {
       default:
         break;
     }
-    
+
     return filtered;
   }, [visits, searchTerm, dateFilter]);
 
@@ -236,7 +237,7 @@ export default function VisitList() {
               className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
             />
           </div>
-          
+
           {/* Filter Toggle Button */}
           <button
             onClick={() => setShowFilters(!showFilters)}
@@ -255,41 +256,37 @@ export default function VisitList() {
           <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
             <button
               onClick={() => setDateFilter("all")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                dateFilter === "all"
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${dateFilter === "all"
                   ? "bg-teal-600 text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
+                }`}
             >
               All Time
             </button>
             <button
               onClick={() => setDateFilter("today")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                dateFilter === "today"
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${dateFilter === "today"
                   ? "bg-teal-600 text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
+                }`}
             >
               Today
             </button>
             <button
               onClick={() => setDateFilter("week")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                dateFilter === "week"
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${dateFilter === "week"
                   ? "bg-teal-600 text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
+                }`}
             >
               Last 7 Days
             </button>
             <button
               onClick={() => setDateFilter("month")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                dateFilter === "month"
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${dateFilter === "month"
                   ? "bg-teal-600 text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
+                }`}
             >
               Last 30 Days
             </button>
@@ -331,9 +328,8 @@ export default function VisitList() {
               {["ID", "Date & Time", "Summary", "Actions"].map(h => (
                 <span
                   key={h}
-                  className={`text-xs font-semibold text-gray-500 uppercase tracking-wide ${
-                    h === "Actions" ? "text-right" : "text-left"
-                  }`}
+                  className={`text-xs font-semibold text-gray-500 uppercase tracking-wide ${h === "Actions" ? "text-right" : "text-left"
+                    }`}
                 >
                   {h}
                 </span>
@@ -341,7 +337,7 @@ export default function VisitList() {
             </div>
 
             {/* Rows */}
-            {currentVisits.map((v) => ( 
+            {currentVisits.map((v) => (
               <div key={v.id} className="border-b border-gray-100 last:border-0">
                 <div
                   onClick={() => handleSelect(v.id)}
@@ -524,7 +520,7 @@ export default function VisitList() {
                 >
                   <ChevronLeft size={16} />
                 </button>
-                
+
                 <div className="flex gap-1">
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                     let pageNum;
@@ -537,16 +533,15 @@ export default function VisitList() {
                     } else {
                       pageNum = currentPage - 2 + i;
                     }
-                    
+
                     return (
                       <button
                         key={pageNum}
                         onClick={() => goToPage(pageNum)}
-                        className={`min-w-[32px] h-8 px-2 rounded-lg text-sm font-medium transition-all ${
-                          currentPage === pageNum
+                        className={`min-w-[32px] h-8 px-2 rounded-lg text-sm font-medium transition-all ${currentPage === pageNum
                             ? "bg-teal-600 text-white"
                             : "text-gray-600 hover:bg-gray-100"
-                        }`}
+                          }`}
                       >
                         {pageNum}
                       </button>
