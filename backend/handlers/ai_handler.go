@@ -16,16 +16,11 @@ func ProcessHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, visitID, err := services.ProcessAndSave(input)
+	result, err := services.Process(input)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"drugs":     result.Drugs,
-		"lab_tests": result.LabTests,
-		"notes":     result.Notes,
-		"visit_id":  visitID,
-	})
+	json.NewEncoder(w).Encode(result)
 }

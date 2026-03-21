@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  Stethoscope, 
-  History, 
-  LogOut, 
-  User, 
+import {
+  Stethoscope,
+  History,
+  LogOut,
+  User,
   Sparkles,
   Menu,
   X
@@ -184,7 +184,12 @@ export default function Home() {
             {tab === "new" ? (
               <>
                 <InputBox setResult={handleSetResult} setVisitId={setVisitId} />
-                <ResultView result={result} visitId={visitId} visitDate={visitDate || undefined} />
+                <ResultView
+                  result={result}
+                  visitId={visitId}
+                  setVisitId={setVisitId}
+                  visitDate={visitDate || undefined}
+                />
               </>
             ) : (
               <VisitList />

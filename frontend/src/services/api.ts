@@ -19,7 +19,7 @@ export const getBill = async (visitId: number): Promise<{ total: number }> => {
 
 export const getVisits = async (): Promise<VisitSummary[]> => {
   const res = await fetch(`${BASE_URL}/visits`, {
-    headers: { Authorization: `Bearer ${getToken()}` },  // ← ()
+    headers: { Authorization: `Bearer ${getToken()}` },
   });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
@@ -27,7 +27,7 @@ export const getVisits = async (): Promise<VisitSummary[]> => {
 
 export const getVisitDetails = async (id: number): Promise<VisitDetails> => {
   const res = await fetch(`${BASE_URL}/visit-details?id=${id}`, {
-    headers: { Authorization: `Bearer ${getToken()}` },  // ← ()
+    headers: { Authorization: `Bearer ${getToken()}` },
   });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
@@ -35,7 +35,7 @@ export const getVisitDetails = async (id: number): Promise<VisitDetails> => {
 
 export const deleteVisit = async (id: number): Promise<void> => {
   const res = await fetch(`${BASE_URL}/delete-visit?id=${id}`, {
-    headers: { Authorization: `Bearer ${getToken()}` },  // ← ()
+    headers: { Authorization: `Bearer ${getToken()}` },
   });
   if (!res.ok) throw new Error(await res.text());
 };
@@ -45,9 +45,27 @@ export const updateVisit = async (id: number, notes: string[]): Promise<void> =>
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${getToken()}`,             // ← ()
+      Authorization: `Bearer ${getToken()}`,
     },
     body: JSON.stringify({ notes }),
   });
   if (!res.ok) throw new Error(await res.text());
 };
+
+export async function saveVisit(data: {
+  drugs: string[];
+  lab_tests: string[];
+  notes: string[];
+}) {
+  const res = await fetch(`${BASE_URL}/save-visit`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${getToken()}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) throw new Error("Failed to save");
+  return res.json();
+}

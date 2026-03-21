@@ -29,10 +29,11 @@ func enableCORS(next http.Handler) http.Handler {
 func main() {
 	godotenv.Load()
 	config.InitDB()
-	routes.SetupRoutes()
 
-	handler := enableCORS(http.DefaultServeMux)
+	router := routes.SetupRoutes()
+
+	handler := enableCORS(router)
 
 	log.Println("Server running on port 8080")
-	http.ListenAndServe(":8080", handler)
+	log.Fatal(http.ListenAndServe(":8080", handler))
 }

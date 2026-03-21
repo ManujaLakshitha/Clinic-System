@@ -23,14 +23,20 @@ func CallAI(input string) (ParseResponse, error) {
 	prompt := fmt.Sprintf(`
 You are a highly accurate clinical assistant.
 
-Extract data STRICTLY into JSON:
+Extract data STRICTLY into JSON format.
 
-Rules:
-- Drugs must include dosage (if available)
-- Lab tests must be medical investigations only
-- Notes must include symptoms, observations
+IMPORTANT FORMAT RULES:
+- "drugs": This MUST be an array of STRINGS only. 
+  Example: ["Paracetamol 500mg", "Amoxicillin 250mg"]
+  (DO NOT use objects like {"name": "...", "dose": "..."} inside this array)
 
-Return ONLY JSON:
+- "lab_tests": Array of STRINGS for medical investigations.
+  Example: ["Full Blood Count", "Chest X-Ray"]
+
+- "notes": Array of STRINGS for symptoms and observations.
+  Example: ["Patient has high fever", "Cough for 3 days"]
+
+Return ONLY valid JSON:
 
 {
  "drugs": [],
@@ -38,7 +44,7 @@ Return ONLY JSON:
  "notes": []
 }
 
-Text: %s
+Text to process: %s
 `, input)
 
 	bodyMap := map[string]interface{}{

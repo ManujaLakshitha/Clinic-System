@@ -1,22 +1,23 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Pill,
   Beaker,
   FileText,
-  Receipt,
   Printer,
-  Loader2,
-  AlertCircle
+  AlertCircle,
+  Plus,
+  Trash2
 } from "lucide-react";
 import type { ParseResponse } from "../types";
 import BillView from "./BillView";
-import { getBill } from "../services/api";
+import { getBill, saveVisit } from "../services/api";
 import PrintBill from "./PrintBill";
 
 type ResultViewProps = {
   result: ParseResponse | null;
   visitId: number | null;
   visitDate?: string;
+  setVisitId: (id: number) => void;
 };
 
 type Category = {
@@ -55,17 +56,73 @@ const CATEGORIES: Category[] = [
   },
 ];
 
-export default function ResultView({ result, visitId, visitDate }: ResultViewProps) {
+export default function ResultView({ result, visitId, visitDate, setVisitId }: ResultViewProps) {
+  const [editable, setEditable] = useState<ParseResponse | null>(null);
   const [total, setTotal] = useState<number | null>(null);
-  const [billingError, setBillingError] = useState<string | null>(null);
   const [billingLoad, setBillingLoad] = useState(false);
+  const [billingError, setBillingError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const [showPrintModal, setShowPrintModal] = useState(false);
 
-  if (!result) return null;
+  useEffect(() => {
+    if (result) {
+      setEditable(result);
+    }
+  }, [result]);
+
+  if (!result || !editable) return null;
 
   const totalItems = (result.drugs?.length || 0) +
     (result.lab_tests?.length || 0) +
     (result.notes?.length || 0);
+
+  const updateItem = (type: "drugs" | "lab_tests" | "notes", index: number, value: string) => {
+    const currentArray = editable[type] as string[];
+    const copy = [...currentArray];
+    copy[index] = value;
+    setEditable({ ...editable, [type]: copy });
+  };
+
+  const deleteItem = (type: "drugs" | "lab_tests" | "notes", index: number) => {
+    const currentArray = editable[type] as string[];
+    const copy = currentArray.filter((_, i) => i !== index);
+    setEditable({ ...editable, [type]: copy });
+  };
+
+  const addItem = (type: "drugs" | "lab_tests" | "notes") => {
+    const currentArray = editable[type] as string[];
+    setEditable({
+      ...editable,
+      [type]: [...currentArray, ""],
+    });
+  };
+
+  const handleSave = async () => {
+    if (!editable) return;
+    setLoading(true);
+
+    try {
+      const data = await saveVisit({
+        drugs: editable.drugs,
+        lab_tests: editable.lab_tests,
+        notes: editable.notes,
+      });
+
+      console.log("Success data:", data);
+
+      if (data && data.visit_id) {
+        alert("✅ Saved Successfully! Visit ID: " + data.visit_id);
+        setVisitId(data.visit_id);
+      } else {
+        throw new Error("Invalid response from server");
+      }
+    } catch (error) {
+      console.error("Save Error Detail:", error);
+      alert("❌ Save failed. Check console for details.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleBill = async () => {
     if (!visitId) return;
@@ -129,43 +186,89 @@ export default function ResultView({ result, visitId, visitDate }: ResultViewPro
     }
   };
 
+  const renderSection = (
+    title: string,
+    type: "drugs" | "lab_tests" | "notes",
+    icon: React.ReactNode
+  ) => {
+
+    const items = editable[type] as string[];
+
+    return (
+      <div className="bg-white border rounded-xl p-4 shadow-sm">
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="text-sm font-semibold flex items-center gap-2">
+            {icon} {title}
+          </h3>
+          <button
+            onClick={() => addItem(type)}
+            className="text-xs flex items-center gap-1 text-green-600"
+          >
+            <Plus size={12} /> Add
+          </button>
+        </div>
+
+        {items.length === 0 ? (
+          <p className="text-xs text-gray-400">No data</p>
+        ) : (
+          items.map((item, i) => (
+            <div key={i} className="flex gap-2 mb-2">
+              <input
+                value={item}
+                onChange={(e) => updateItem(type, i, e.target.value)}
+                className="flex-1 border px-2 py-1 rounded text-xs"
+              />
+              <button
+                onClick={() => deleteItem(type, i)}
+                className="text-red-500"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-5">
       {/* Summary bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <h2 className="text-sm font-semibold text-gray-900">
-            Classification Results
-          </h2>
-          <span className="bg-teal-50 text-teal-800 border border-teal-200 rounded-full px-2.5 py-0.5 text-xs font-semibold">
-            {totalItems} items
-          </span>
-        </div>
+      <div className="flex justify-between items-center">
+        <h2 className="font-semibold text-sm">Doctor Review Mode</h2>
 
         <div className="flex gap-2">
           <button
-            onClick={handleBill}
-            disabled={billingLoad}
-            className="no-print px-3.5 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50 transition-all flex items-center gap-1.5 disabled:opacity-50"
+            onClick={handleSave}
+            disabled={loading}
+            className="px-4 py-2 bg-green-600 text-white rounded text-xs"
           >
-            {billingLoad ? (
-              <Loader2 size={14} className="animate-spin" />
-            ) : (
-              <Receipt size={14} />
-            )}
+            {loading ? "Saving..." : "Confirm & Save"}
+          </button>
+
+          <button
+            onClick={handleBill}
+            disabled={!visitId}
+            className="px-4 py-2 bg-blue-600 text-white rounded text-xs"
+          >
             Generate Bill
           </button>
 
           <button
-            onClick={handlePrintBill}
+            onClick={() => setShowPrintModal(true)}
             disabled={!total}
-            className="no-print px-3.5 py-1.5 bg-teal-600 text-white rounded-lg text-xs font-medium hover:bg-teal-700 transition-all flex items-center gap-1.5 disabled:opacity-50"
+            className="px-4 py-2 bg-teal-600 text-white rounded text-xs"
           >
-            <Printer size={14} />
-            Print Bill
+            Print
           </button>
-
         </div>
+      </div>
+
+      {/* EDIT SECTIONS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {renderSection("Drugs", "drugs", <Pill size={14} />)}
+        {renderSection("Lab Tests", "lab_tests", <Beaker size={14} />)}
+        {renderSection("Notes", "notes", <FileText size={14} />)}
       </div>
 
       {/* Three category cards */}
@@ -229,7 +332,9 @@ export default function ResultView({ result, visitId, visitDate }: ResultViewPro
         </div>
       )}
 
-      <BillView total={total} drugs={result.drugs || []} tests={result.lab_tests || []} />
+      <BillView total={total}
+        drugs={editable.drugs || []}
+        tests={editable.lab_tests || []} />
 
       {/* Print Bill Modal */}
       {showPrintModal && total && (
@@ -257,9 +362,9 @@ export default function ResultView({ result, visitId, visitDate }: ResultViewPro
               <PrintBill
                 visitId={visitId!}
                 visitDate={visitDate || new Date().toISOString()}
-                drugs={result.drugs || []}
-                labTests={result.lab_tests || []}
-                notes={result.notes || []}
+                drugs={editable.drugs || []}
+                labTests={editable.lab_tests || []}
+                notes={editable.notes || []}
                 total={total}
               />
             </div>
