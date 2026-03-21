@@ -104,11 +104,10 @@ export default function ResultView({ result, visitId, visitDate, setVisitId }: R
         notes: editable.notes,
       });
 
-      console.log("Success data:", data);
-
       if (data && data.visit_id) {
         alert("Saved Successfully! Visit ID: " + data.visit_id);
         setVisitId(data.visit_id);
+
       } else {
         throw new Error("Invalid response from server");
       }
@@ -146,35 +145,35 @@ export default function ResultView({ result, visitId, visitDate, setVisitId }: R
           <head>
             <title>Bill - ABC Health Clinic</title>
             <meta charset="utf-8" />
+            <script src="https://cdn.tailwindcss.com"></script>
             <style>
-              * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-              }
-              body {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', system-ui, sans-serif;
-                background: white;
-                padding: 20px;
-              }
               @media print {
-                body {
-                  padding: 0;
-                }
-                .no-print {
-                  display: none !important;
-                }
+                body { margin: 0; padding: 0; }
+                .no-print { display: none !important; }
               }
+              * { 
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important; 
+              }
+              body { font-family: sans-serif; }
             </style>
           </head>
-          <body>
-            ${printContent.innerHTML}
+          <body class="bg-white">
+            <div class="p-8">
+              ${printContent.innerHTML}
+            </div>
+            <script>
+              window.onload = () => {
+                setTimeout(() => {
+                  window.print();
+                  window.onafterprint = () => window.close();
+                }, 800);
+              };
+            </script>
           </body>
         </html>
       `);
       printWindow.document.close();
-      printWindow.print();
-      printWindow.close();
     }
   };
 
@@ -233,17 +232,17 @@ export default function ResultView({ result, visitId, visitDate, setVisitId }: R
           <button
             onClick={handleSave}
             disabled={loading}
-            className="px-4 py-2 bg-green-600 text-white rounded text-xs"
+            className="px-4 py-2 bg-green-900 text-white rounded text-xs"
           >
             {loading ? "Saving..." : "Confirm & Save"}
           </button>
 
           <button
             onClick={handleBill}
-            disabled={!visitId}
-            className="px-4 py-2 bg-blue-600 text-white rounded text-xs"
+            disabled={!visitId || billingLoad}
+            className="px-4 py-2 bg-blue-900 text-white rounded text-xs flex items-center gap-2"
           >
-            Generate Bill
+            {billingLoad ? "Generating..." : "Generate Bill"}
           </button>
 
           <button

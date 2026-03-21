@@ -35,9 +35,16 @@ export const getVisitDetails = async (id: number): Promise<VisitDetails> => {
 
 export const deleteVisit = async (id: number): Promise<void> => {
   const res = await fetch(`${BASE_URL}/delete-visit?id=${id}`, {
-    headers: { Authorization: `Bearer ${getToken()}` },
+    method: "DELETE",
+    headers: { 
+      Authorization: `Bearer ${getToken()}` 
+    },
   });
-  if (!res.ok) throw new Error(await res.text());
+  
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(errorText || "Failed to delete visit");
+  }
 };
 
 export const updateVisit = async (id: number, notes: string[]): Promise<void> => {
